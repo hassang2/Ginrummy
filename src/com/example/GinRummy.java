@@ -163,7 +163,10 @@ public class GinRummy {
                 return false;
             }
         }
-        return true;
+
+        Set<Card> deadwoods = extractDeadwood(playerHand, player.getMelds());
+        int deadwoodScore = calculateDeadwoodCount(deadwoods);
+        return deadwoodScore <= 10;
     }
 
     /**
@@ -173,15 +176,23 @@ public class GinRummy {
     private void calculateScores(PlayerStrategy player){
         PlayerStrategy otherPlayer = player.equals(player1) ? player2 : player1;
         Set<Card> knockingPlayerDeadwoods = extractDeadwood(hands.get(player), player.getMelds());
-        Set<Card> otherPlayerDeadwoods = extractDeadwood(hands.get(otherPlayer), otherPlayer.getMelds());
         int knockingPlayerDeadwoodCount = calculateDeadwoodCount(knockingPlayerDeadwoods);
+
+        Set<Card> otherPlayerDeadwoods = extractDeadwood(hands.get(otherPlayer), otherPlayer.getMelds());
         int otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
 
-        if (knockingPlayerDeadwoodCount <= otherPlayerDeadwoodCount){
-            scores.put(player, scores.get(player) + otherPlayerDeadwoodCount - knockingPlayerDeadwoodCount);
+        if (knockingPlayerDeadwoodCount == 0){
+            scores.put(player, scores.get(player) + 25 + otherPlayerDeadwoodCount);
         } else {
-            scores.put(player, scores.get(player) + otherPlayerDeadwoodCount - knockingPlayerDeadwoodCount);
+            otherPlayerDeadwoods = layoff(player.getMelds(), otherPlayerDeadwoods);
+            otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
 
+            if (knockingPlayerDeadwoodCount <= otherPlayerDeadwoodCount) {
+                scores.put(player, scores.get(player) + otherPlayerDeadwoodCount - knockingPlayerDeadwoodCount);
+            } else {
+                scores.put(otherPlayer, scores.get(otherPlayer) + 25
+                         + knockingPlayerDeadwoodCount - otherPlayerDeadwoodCount);
+            }
         }
 
     }
@@ -212,8 +223,23 @@ public class GinRummy {
         return count;
     }
 
-    public static Set<Card> getDeadwoodCards(Set<Card> cards){
-
+    /**
+     * attemps to append the deadwoods in the given melds and
+     * returs the new list of deadwoods
+     * @param melds the melds we want to append to
+     * @param deadwoods the cards we want to append
+     * @return the set of deadwoods that couldn't be appended
+     */
+    private static Set<Card> layoff(List<Meld> melds, Set<Card> deadwoods){
+        for (Card card : deadwoods){
+            for (Meld meld : melds){
+                if (meld.canAppendCard(card)){
+                    meld.appendCard(card);
+                    deadwoods.remove(card);
+                }
+            }
+        }
+        return deadwoods;
     }
 
     public PlayerStrategy getWinner(){
