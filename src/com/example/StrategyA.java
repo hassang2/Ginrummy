@@ -1,7 +1,11 @@
 package com.example;
 
+import javax.swing.text.html.HTMLDocument;
 import java.util.*;
 
+/**
+ * Knocks as fast as possible
+ */
 public class StrategyA implements PlayerStrategy {
 
     private List<Meld> melds = new ArrayList<>();
@@ -14,26 +18,50 @@ public class StrategyA implements PlayerStrategy {
     @Override
     public void receiveInitialHand(List<Card> cards) {
         hand = new HashSet<>(cards);
+        updateHand();
     }
 
     @Override
     public boolean willTakeTopDiscard(Card card) {
-        return false;
+        Set<Card> tempHand = new HashSet<>(hand);
+        tempHand.add(card);
+        int newDeadwoodCount = calculateTotalValue(hand) - calculateTotalValue(findBestMeldSet(tempHand));
+        return newDeadwoodCount < deadwoodCount;
     }
 
     @Override
     public Card drawAndDiscard(Card drawnCard) {
-        return null;
+        hand.add(drawnCard);
+        updateHand();
+
+        //if we have no deadwood after picking up the new card
+        if (deadwood.size() == 0) {
+            Iterator<Card> cardIterator = hand.iterator();
+            Card lowestValueCard = cardIterator.next();
+            while(cardIterator.hasNext()){
+                Card nextCard = cardIterator.next();
+                if (nextCard.getPointValue() < lowestValueCard.getPointValue()){
+                    lowestValueCard = nextCard;
+                }
+            }
+            return lowestValueCard;
+        }
+        HashMap<Card, Integer> cardScores = getDeadwoodCardScores(deadwood);
+
+        return findWorstCard(cardScores);
     }
 
     @Override
     public boolean knock() {
-        return false;
+        return deadwoodCount <= 10;
     }
 
     @Override
     public void opponentEndTurnFeedback(boolean drewDiscard, Card previousDiscardTop, Card opponentDiscarded) {
-
+        if (drewDiscard) {
+            opponentHand.add(previousDiscardTop);
+        }
+        opponentHand.remove(opponentDiscarded);
     }
 
     @Override
@@ -48,9 +76,52 @@ public class StrategyA implements PlayerStrategy {
 
     @Override
     public void reset() {
-
+        hand = new HashSet<>();
+        opponentHand = new HashSet<>();
+        deadwood = new HashSet<>();
+        deadwoodCount = 0;
+        melds = new ArrayList<>();
     }
 
+    private void updateHand(){
+        melds = findBestMeldSet(hand);
+        deadwood = extractDeadwood(hand, melds);
+        deadwoodCount = calculateTotalValue(deadwood);
+    }
+
+    private static Card findWorstCard(HashMap<Card, Integer> cardScores){
+        Card worseCard = null;
+        int worseScore = Integer.MAX_VALUE;
+        for (Card card : cardScores.keySet()){
+            if (cardScores.get(card) < worseScore){
+                worseCard = card;
+                worseScore = cardScores.get(card);
+            }
+        }
+
+        return worseCard;
+    }
+
+    private static HashMap<Card, Integer> getDeadwoodCardScores(Set<Card> deadwoods){
+        ArrayList<Card> rankSortedCards = sortByRank(deadwoods);
+        ArrayList<Card> suitSortedCards = sortBySuit(deadwoods);
+
+        HashMap<Card, Integer> cardScores = new HashMap<>();
+        //3 of same rank
+        for (int i = 0; i < rankSortedCards.size() - 1; i++) {
+            if (rankSortedCards.get(i).equals(rankSortedCards.get(i+1))){
+                cardScores.put(rankSortedCards.get(i), cardScores.get(rankSortedCards.get(i)) + 1);
+            }
+        }
+        //3 run of suit
+        for (int i = 0; i < suitSortedCards.size() - 1; i++) {
+            if (suitSortedCards.get(i).getSuit().equals(suitSortedCards.get(i+1).getSuit())){
+                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + 2);
+            }
+        }
+
+        return cardScores;
+    }
     /**
      * extracts the deadwood cards from a given set of cards and melds
      * @param cards the cards we want to extract deadwoods from
@@ -171,14 +242,14 @@ public class StrategyA implements PlayerStrategy {
             if (possibleMeld != null){
                 allMelds.add(possibleMeld);
 
-                ArrayList<Card> threeSubset1 = new ArrayList<Card>();
+                ArrayList<Card> threeSubset1 = new ArrayList<>();
 
                 threeSubset1.add(cardSubset.get(0));
                 threeSubset1.add(cardSubset.get(1));
                 threeSubset1.add(cardSubset.get(3));
                 allMelds.add(Meld.buildSetMeld(threeSubset1));
 
-                ArrayList<Card> threeSubset2 = new ArrayList<Card>();
+                ArrayList<Card> threeSubset2 = new ArrayList<>();
                 threeSubset2.add(cardSubset.get(0));
                 threeSubset2.add(cardSubset.get(2));
                 threeSubset2.add(cardSubset.get(3));
@@ -196,24 +267,24 @@ public class StrategyA implements PlayerStrategy {
         }
 
         //3 run of same suit
-        for (int i = 0; i < rankSortedCards.size() - 2; i++) {
-            Meld possibleMeld = Meld.buildRunMeld(rankSortedCards.subList(i, i+2));
+        for (int i = 0; i < suitSortedCards.size() - 2; i++) {
+            Meld possibleMeld = Meld.buildRunMeld(suitSortedCards.subList(i, i+2));
             if (possibleMeld != null){
                 allMelds.add(possibleMeld);
             }
         }
 
         //4 run of same suit
-        for (int i = 0; i < rankSortedCards.size() - 3; i++) {
-            Meld possibleMeld = Meld.buildRunMeld(rankSortedCards.subList(i, i+3));
+        for (int i = 0; i < suitSortedCards.size() - 3; i++) {
+            Meld possibleMeld = Meld.buildRunMeld(suitSortedCards.subList(i, i+3));
             if (possibleMeld != null){
                 allMelds.add(possibleMeld);
             }
         }
 
         //5 run of same suit
-        for (int i = 0; i < rankSortedCards.size() - 4; i++) {
-            Meld possibleMeld = Meld.buildRunMeld(rankSortedCards.subList(i, i+4));
+        for (int i = 0; i < suitSortedCards.size() - 4; i++) {
+            Meld possibleMeld = Meld.buildRunMeld(suitSortedCards.subList(i, i+4));
             if (possibleMeld != null){
                 allMelds.add(possibleMeld);
             }

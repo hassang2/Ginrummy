@@ -1,16 +1,26 @@
 package com.example;
 
 import java.util.*;
-import java.util.logging.Handler;
 
 public class GinRummy {
 
 
     public void main(String[] args){
-        //keep track of over all score of each matchup here
+        GinRummy game;
+        for (int i = 0; i < 3; i++) {
+             game = new GinRummy(new StrategyA(), new StrategyB());
+             game.playGame();
+             game.getWinner();
+        }
     }
 
     private static final int HAND_SIZE = 10;
+    private static final int SCORE_TO_WIN = 50;
+    private static final int UNDER_CUT_SCORE = 25;
+    private static final int GIN_SCORE = 25;
+    private static final int MIN_DEADWOOD_COUNT_TO_KNOCK = 10;
+
+
 
     private HashMap<PlayerStrategy, Integer> scores = new HashMap<>();
     private HashMap<PlayerStrategy, Set<Card>> hands = new HashMap<>();
@@ -101,13 +111,12 @@ public class GinRummy {
             playerTurn = playerTurn.equals(player1) ? player2 : player1;
         }
 
-        if (scores.get(player1) >= 50){
+        if (scores.get(player1) >= SCORE_TO_WIN){
             winner = player1;
 
-        } else if (scores.get(player2) >= 50){
+        } else if (scores.get(player2) >= SCORE_TO_WIN){
             winner = player2;
         }
-
     }
 
     /**
@@ -117,7 +126,7 @@ public class GinRummy {
 
         //deal hand to player 1
         Iterator<Card> cardIterator = deck.iterator();
-        ArrayList<Card> hand1List = new ArrayList<Card>();
+        ArrayList<Card> hand1List = new ArrayList<>();
         Set<Card> hand1Set = new HashSet<>();
 
         for (int i = 0; i < HAND_SIZE; i++) {
@@ -128,7 +137,7 @@ public class GinRummy {
         hands.put(player1, hand1Set);
 
         //deal hand to player 2
-        ArrayList<Card> hand2List = new ArrayList<Card>();
+        ArrayList<Card> hand2List = new ArrayList<>();
         Set<Card> hand2Set = new HashSet<>();
 
         for (int i = 0; i < HAND_SIZE; i++) {
@@ -183,7 +192,7 @@ public class GinRummy {
 
         Set<Card> deadwoods = extractDeadwood(playerHand, player.getMelds());
         int deadwoodScore = calculateDeadwoodCount(deadwoods);
-        return deadwoodScore <= 10;
+        return deadwoodScore <= MIN_DEADWOOD_COUNT_TO_KNOCK;
     }
 
     /**
@@ -198,8 +207,10 @@ public class GinRummy {
         Set<Card> otherPlayerDeadwoods = extractDeadwood(hands.get(otherPlayer), otherPlayer.getMelds());
         int otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
 
+        //if it is Gin
         if (knockingPlayerDeadwoodCount == 0){
-            scores.put(player, scores.get(player) + 25 + otherPlayerDeadwoodCount);
+            scores.put(player, scores.get(player) + GIN_SCORE + otherPlayerDeadwoodCount);
+
         } else {
             otherPlayerDeadwoods = layoff(player.getMelds(), otherPlayerDeadwoods);
             otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
@@ -207,7 +218,8 @@ public class GinRummy {
             if (knockingPlayerDeadwoodCount <= otherPlayerDeadwoodCount) {
                 scores.put(player, scores.get(player) + otherPlayerDeadwoodCount - knockingPlayerDeadwoodCount);
             } else {
-                scores.put(otherPlayer, scores.get(otherPlayer) + 25
+                //Undercut
+                scores.put(otherPlayer, scores.get(otherPlayer) + UNDER_CUT_SCORE
                          + knockingPlayerDeadwoodCount - otherPlayerDeadwoodCount);
             }
         }
