@@ -17,6 +17,7 @@ public class GinRummy {
     private Set<Card> deck = Card.getAllCards();
     private Card discard;
     private boolean inProgress = false;
+    private PlayerStrategy winner = null;
     private PlayerStrategy player1;
     private PlayerStrategy player2;
 
@@ -31,14 +32,21 @@ public class GinRummy {
         }
     }
 
-    public void playGames(int numberOfGames){
-
-        Iterator<Card> cardIterator = deck.iterator();
-        PlayerStrategy playerTurn;
+    private void initGame(){
+        player1.reset();
+        player2.reset();
         deck = Card.getAllCards();
         deck = shuffle(deck);
         inProgress = true;
         dealInitialHands();
+    }
+
+    public void playGame(){
+
+        Iterator<Card> cardIterator = deck.iterator();
+        PlayerStrategy playerTurn;
+
+        initGame();
 
         //handling the beginning of the game
         discard = cardIterator.next();
@@ -72,8 +80,10 @@ public class GinRummy {
                 Card previousDiscard = discard;
                 discard = playerTurn.drawAndDiscard(nextCard);
 
-                //if player attempt sto discard something they don't have
+                //if player attempt to discard something they don't have
                 if (!hands.get(playerTurn).remove(discard)){
+                    System.out.println("player doesn't own this card in hand");
+
                     System.exit(0);
                 }
                 playerTurn.opponentEndTurnFeedback(false, previousDiscard, discard);
@@ -81,16 +91,23 @@ public class GinRummy {
 
             if (playerTurn.knock()){
                 if(!validMelds(hands.get(playerTurn), playerTurn)){
-                    System.out.println("player doesn't own this card");
+                    System.out.println("player doesn't own this card in melds");
                     System.exit(0);
                 } else {
                     calculateScores(playerTurn);
+                    break;
                 }
             }
             playerTurn = playerTurn.equals(player1) ? player2 : player1;
         }
 
-        TIE
+        if (scores.get(player1) >= 50){
+            winner = player1;
+
+        } else if (scores.get(player2) >= 50){
+            winner = player2;
+        }
+
     }
 
     /**
@@ -144,11 +161,11 @@ public class GinRummy {
      * @return true if melds are valid and false if not
      */
     private static boolean validMelds(Set<Card> playerHand, PlayerStrategy player){
-        if (player.getMelds() == null){
+        if (player.getMelds().size() == 0){
             return false;
         }
         for (Meld meld: player.getMelds()){
-            if (meld == null){
+            if (meld == null || meld.getCards().length == 0){
                 return false;
             }
 
@@ -194,7 +211,6 @@ public class GinRummy {
                          + knockingPlayerDeadwoodCount - otherPlayerDeadwoodCount);
             }
         }
-
     }
 
     /**
@@ -212,7 +228,11 @@ public class GinRummy {
         return cards;
     }
 
-
+    /**
+     * calculates the deadwood count from the given deadwood cards
+     * @param cards the deadwood cards
+     * @return the total deadwood count of the cards
+     */
     private static int calculateDeadwoodCount(Collection<Card> cards){
         Iterator<Card> cardIterator = cards.iterator();
         
@@ -243,6 +263,6 @@ public class GinRummy {
     }
 
     public PlayerStrategy getWinner(){
-
+        return winner;
     }
 }
