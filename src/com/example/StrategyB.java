@@ -2,7 +2,7 @@ package com.example;
 
 import java.util.*;
 
-public class StrategyA implements PlayerStrategy {
+public class StrategyB implements PlayerStrategy {
 
     private List<Meld> melds = new ArrayList<>();
     private Set<Card> hand = new HashSet<>();
