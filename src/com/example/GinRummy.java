@@ -1,6 +1,5 @@
 package com.example;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -16,7 +15,7 @@ public class GinRummy {
         gameWins.put(player1, 0);
         gameWins.put(player2, 0);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 3; i++) {
             System.out.println("Game " + (i+1));
             game = new GinRummy(player1, player2);
             game.playGame();
@@ -38,7 +37,7 @@ public class GinRummy {
 
     private HashMap<PlayerStrategy, Integer> scores = new HashMap<>();
     private HashMap<PlayerStrategy, Set<Card>> hands = new HashMap<>();
-    private Set<Card> deck = Card.getAllCards();
+    private ArrayList<Card> deck = new ArrayList<>(Card.getAllCards());
     Iterator<Card> deckIterator = deck.iterator();
 
     private Card discard;
@@ -215,10 +214,10 @@ public class GinRummy {
      * @param cards the cards in the deck we want to shuffle
      * @return the shuffled deck
      */
-    private static Set<Card> shuffle(Collection<Card> cards){
-        List<Card> listOfCards = new ArrayList<>(cards);
+    private static ArrayList<Card> shuffle(Collection<Card> cards){
+        ArrayList<Card> listOfCards = new ArrayList<>(cards);
         Collections.shuffle(listOfCards);
-        return new HashSet<>(listOfCards);
+        return listOfCards;
     }
 
     /**
@@ -339,15 +338,18 @@ public class GinRummy {
             return deadwoods;
         }
 
+        Set<Card> deadwoodsCopy = new HashSet<>(deadwoods);
+        List<Meld> meldsCopy = new ArrayList<>(melds);
+
         for (Card card : deadwoods){
-            for (Meld meld : melds){
+            for (Meld meld : meldsCopy){
                 if (meld.canAppendCard(card)){
                     meld.appendCard(card);
-                    deadwoods.remove(card);
+                    deadwoodsCopy.remove(card);
                 }
             }
         }
-        return deadwoods;
+        return deadwoodsCopy;
     }
 
     public PlayerStrategy getWinner(){
@@ -362,7 +364,6 @@ public class GinRummy {
         }
         System.out.print("\n");
 
-
     }
     public static void printCards(Card[] cards){
         for (Card card : cards){
@@ -370,10 +371,10 @@ public class GinRummy {
         }
         System.out.print("\n");
     }
+
     public static void printCards(ArrayList<Meld> melds){
         for (Meld meld : melds){
             printCards(meld.getCards());
         }
     }
-
 }
