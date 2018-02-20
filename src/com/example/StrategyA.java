@@ -6,6 +6,7 @@ import java.util.*;
  */
 public class StrategyA implements PlayerStrategy {
 
+    private static final int LARGE_MELD_THRESHOLD = 3;
     private List<Meld> melds = new ArrayList<>();
     private Set<Card> hand = new HashSet<>();
     private Set<Card> opponentHand = new HashSet<>();
@@ -14,7 +15,8 @@ public class StrategyA implements PlayerStrategy {
     private int deadwoodCount = 0;
 
     private static final int DEADWOOD_COUNT_TO_KNOCK = 10;
-    private static final int SCORE_PENALTY_FOR_LARGE_MELD = 2;
+    private static final int SCORE_FOR_MELD = 5;
+    private static final int SCORE_PENALTY_FOR_LARGE_MELD = 3;
     private static final int SCORE_PENALTY_FOR_CARD_IN_DISCARDS = 2;
     private static final int SCORE_FOR_POSSIBLE_RUN = 4;
     private static final int SCORE_FOR_POSSIBLE_SET = 4;
@@ -43,7 +45,6 @@ public class StrategyA implements PlayerStrategy {
 
         //if we have no deadwood after picking up the new card
         if (deadwood.size() == 0) {
-            System.out.println("no Wood after picking");
 
             Iterator<Card> cardIterator = hand.iterator();
             Card lowestValueCard = cardIterator.next();
@@ -121,10 +122,7 @@ public class StrategyA implements PlayerStrategy {
                 worstScore = cardScores.get(worstCard);
             }
         }
-
-        if (worstCard == null){
-            System.out.println("why tho");
-        }
+        
         return worstCard;
     }
 
@@ -158,14 +156,18 @@ public class StrategyA implements PlayerStrategy {
             }
         }
 
+        //give meld cards good score so they don't get dropped
         //drop from melds if the meld has 4+ cards
         for (Meld meld : melds){
-            if (meld instanceof RunMeld && meld.getCards().length > 3){
+            for (Card card : meld.getCards()){
+                cardScores.put(card, cardScores.get(card) + SCORE_FOR_MELD);
+            }
+            if (meld instanceof RunMeld && meld.getCards().length > LARGE_MELD_THRESHOLD){
                 ArrayList<Card> suitSortedMeld = sortBySuit(meld.getCards());
                 cardScores.put(suitSortedMeld.get(0), cardScores.get(suitSortedMeld.get(0)) - 1);
                 cardScores.put(suitSortedMeld.get(suitSortedMeld.size() - 1), cardScores.get(
                         suitSortedMeld.get(suitSortedMeld.size() - 1)) - SCORE_PENALTY_FOR_LARGE_MELD);
-            } else if (meld instanceof SetMeld && meld.getCards().length > 3){
+            } else if (meld instanceof SetMeld && meld.getCards().length > LARGE_MELD_THRESHOLD){
                 for (Card card : meld.getCards()) {
                     cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_LARGE_MELD);
                 }
@@ -174,13 +176,14 @@ public class StrategyA implements PlayerStrategy {
 
         //drop if cards that make meld with this card have already been discarded
 //        for (Card card : hand){
-//            if (discardscards.){
+//            if (discards.){
 //                //make sure to not decrease score if the card is part of meld
 //                //TODO
 //                cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_CARD_IN_DISCARDS);
 //
 //            }
 //        }
+
 
         return cardScores;
     }
@@ -396,4 +399,16 @@ public class StrategyA implements PlayerStrategy {
         }
         return sortedCards;
     }
+
+    /**
+     * returns how many cards that could have created a meld with this card are in the given list of cards.
+     * for example if the card is 8 of spades, this method returns the number of 8's in the cards and +1
+     * for 7 or 9 of spades
+     * @param cards the cards we want to search through
+     * @param card the card we want to search for
+     * @return the number of cards that might have been meld with the given card.
+     */
+//    private static int contains(ArrayList<Card> cards, Card card){
+//
+//    }
 }
