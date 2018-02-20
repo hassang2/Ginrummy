@@ -10,17 +10,14 @@ public class GinRummy {
     private static final int SCORE_TO_WIN = 50;
     private static final int UNDER_CUT_SCORE = 25;
     private static final int GIN_SCORE = 25;
-    private static final int MIN_DEADWOOD_COUNT_TO_KNOCK = 10;
 
 
 
     private HashMap<PlayerStrategy, Integer> scores = new HashMap<>();
     private HashMap<PlayerStrategy, Set<Card>> hands = new HashMap<>();
     private ArrayList<Card> deck = new ArrayList<>(Card.getAllCards());
-//    Iterator<Card> deckIterator = deck.iterator();
 
     private Card discard;
-    private boolean inProgress = false;
     private PlayerStrategy winner = null;
     private PlayerStrategy player1;
     private PlayerStrategy player2;
@@ -43,8 +40,7 @@ public class GinRummy {
         player1.reset();
         player2.reset();
         deck = new ArrayList<>(Card.getAllCards());
-        deck = shuffle(deck);
-        inProgress = true;
+        deck = Utility.shuffle(deck);
         winner = null;
         dealInitialHands();
     }
@@ -128,7 +124,7 @@ public class GinRummy {
 
                 if (playerTurn.knock()) {
 //                    System.out.println(playerTurn.getClass() + " knocked ");
-                    if (!validMelds(hands.get(playerTurn), playerTurn)) {
+                    if (!Utility.validMelds(hands.get(playerTurn), playerTurn)) {
                         System.out.println("player doesn't own this card in melds");
                         System.exit(0);
                     } else {
@@ -187,57 +183,6 @@ public class GinRummy {
 
 
 
-    /**
-     * shuffles the deck.
-     * @param cards the cards in the deck we want to shuffle
-     * @return the shuffled deck
-     */
-    private static ArrayList<Card> shuffle(Collection<Card> cards){
-        ArrayList<Card> listOfCards = new ArrayList<>(cards);
-        Collections.shuffle(listOfCards);
-        return listOfCards;
-    }
-
-    /**
-     * checks if the player actually owns the cards in their melds and validate their presented melds.
-     * This also checks if the deadwood count of the player is less than or equal to 10.
-     * also checks for null melds and cards
-     * @param playerHand the hand of the player
-     * @param player the player's meld we want to validate
-     * @return true if melds are valid and false if not
-     */
-    private static boolean validMelds(Set<Card> playerHand, PlayerStrategy player){
-        if (player.getMelds() == null || player.getMelds().size() == 0){
-            return true;
-        }
-        for (Meld meld: player.getMelds()){
-            if (meld == null || meld.getCards().length == 0){
-                System.out.println("0 length meld");
-                return false;
-            }
-
-            for (Card card: meld.getCards()){
-                if (!playerHand.contains(card)){
-                    System.out.println("doesn't own this");
-                    return false;
-                }
-            }
-
-            if (meld instanceof RunMeld && Meld.buildRunMeld(meld.getCards()) == null){
-                System.out.println("not a run");
-
-                return false;
-            } else if (meld instanceof SetMeld && Meld.buildSetMeld(meld.getCards()) == null){
-                System.out.println("not a set");
-
-                return false;
-            }
-        }
-
-        Set<Card> deadwoods = extractDeadwood(playerHand, player.getMelds());
-        int deadwoodScore = calculateDeadwoodCount(deadwoods);
-        return deadwoodScore <= MIN_DEADWOOD_COUNT_TO_KNOCK;
-    }
 
     /**
      * calcualtes the scores that should be awarded to each player
@@ -245,21 +190,21 @@ public class GinRummy {
      */
     private void calculateScores(PlayerStrategy player){
         //knocking player
-        Set<Card> knockingPlayerDeadwoods = extractDeadwood(hands.get(player), player.getMelds());
-        int knockingPlayerDeadwoodCount = calculateDeadwoodCount(knockingPlayerDeadwoods);
+        Set<Card> knockingPlayerDeadwoods = Utility.extractDeadwood(hands.get(player), player.getMelds());
+        int knockingPlayerDeadwoodCount = Utility.calculateDeadwoodCount(knockingPlayerDeadwoods);
 
         //other player
         PlayerStrategy otherPlayer = player.equals(player1) ? player2 : player1;
-        Set<Card> otherPlayerDeadwoods = extractDeadwood(hands.get(otherPlayer), otherPlayer.getMelds());
-        int otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
+        Set<Card> otherPlayerDeadwoods = Utility.extractDeadwood(hands.get(otherPlayer), otherPlayer.getMelds());
+        int otherPlayerDeadwoodCount = Utility.calculateDeadwoodCount(otherPlayerDeadwoods);
 
         //if it is Gin
         if (knockingPlayerDeadwoodCount == 0){
             scores.put(player, scores.get(player) + GIN_SCORE + otherPlayerDeadwoodCount);
 
         } else {
-            otherPlayerDeadwoods = layoff(player.getMelds(), otherPlayerDeadwoods);
-            otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
+            otherPlayerDeadwoods = Utility.layoff(player.getMelds(), otherPlayerDeadwoods);
+            otherPlayerDeadwoodCount = Utility.calculateDeadwoodCount(otherPlayerDeadwoods);
 
             if (knockingPlayerDeadwoodCount <= otherPlayerDeadwoodCount) {
                 scores.put(player, scores.get(player) + otherPlayerDeadwoodCount - knockingPlayerDeadwoodCount);
@@ -271,75 +216,16 @@ public class GinRummy {
         }
     }
 
-    /**
-     * extracts the deadwood cards from a given set of cards and melds
-     * @param cards the cards we want to extract deadwoods from
-     * @param melds the melds in the cards
-     * @return the set of deadwood cards
-     */
-    private static Set<Card> extractDeadwood(Set<Card> cards, List<Meld> melds){
-        Set<Card> cardCopy = new HashSet<>(cards);
-        if (melds == null || melds.size() == 0){
-            return cards;
-        }
 
-        for (Meld meld : melds) {
-            for (Card card : meld.getCards()) {
-                cardCopy.remove(card);
-            }
-        }
-        return cardCopy;
-    }
 
-    /**
-     * calculates the deadwood count from the given deadwood cards
-     * @param cards the deadwood cards
-     * @return the total deadwood count of the cards
-     */
-    private static int calculateDeadwoodCount(Collection<Card> cards){
-        Iterator<Card> cardIterator = cards.iterator();
-        
-        int count = 0;
-        while (cardIterator.hasNext()){
-            count += cardIterator.next().getPointValue();
-        }
-        return count;
-    }
 
-    /**
-     * attemps to append the deadwoods in the given melds and
-     * returs the new list of deadwoods
-     * @param melds the melds we want to append to
-     * @param deadwoods the cards we want to append
-     * @return the set of deadwoods that couldn't be appended
-     */
-    private static Set<Card> layoff(List<Meld> melds, Set<Card> deadwoods){
-        if (melds == null || melds.size() == 0){
-            return deadwoods;
-        }
-
-        Set<Card> deadwoodsCopy = new HashSet<>(deadwoods);
-        List<Meld> meldsCopy = new ArrayList<>(melds);
-
-        for (Card card : deadwoods){
-            for (Meld meld : meldsCopy){
-                if (meld.canAppendCard(card)){
-                    meld.appendCard(card);
-                    deadwoodsCopy.remove(card);
-                }
-            }
-        }
-        return deadwoodsCopy;
-    }
 
     public PlayerStrategy getWinner(){
         return winner;
     }
 
     public static void printCards(Set<Card> cards){
-        Iterator<Card> it = cards.iterator();
-        while(it.hasNext()){
-            Card card = it.next();
+        for (Card card : cards) {
             System.out.print(card.getRank() + " " + card.getSuit() + " ");
         }
         System.out.print("\n");
