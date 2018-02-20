@@ -2,7 +2,7 @@ package com.example;
 import java.util.*;
 
 /**
- * Knocks as fast as possible
+ * Never Knock
  */
 public class StrategyB implements PlayerStrategy {
 
@@ -62,12 +62,7 @@ public class StrategyB implements PlayerStrategy {
 
     @Override
     public boolean knock() {
-        for (Meld meld : melds){
-            GinRummy.printCards(meld.getCards());
-        }
-        System.out.print("\n");
-
-        return deadwoodCount <= 10;
+        return false;
     }
 
     @Override

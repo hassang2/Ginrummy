@@ -10,8 +10,8 @@ public class GinRummy {
     public static void main(String[] args){
         GinRummy game;
         HashMap<PlayerStrategy, Integer> gameWins = new HashMap<>();
-        PlayerStrategy player1 = new StrategyC();
-        PlayerStrategy player2 = new StrategyB();
+        PlayerStrategy player1 = new StrategyA();
+        PlayerStrategy player2 = new StrategyC();
 
         gameWins.put(player1, 0);
         gameWins.put(player2, 0);
@@ -65,7 +65,6 @@ public class GinRummy {
         player1.reset();
         player2.reset();
         deck = new ArrayList<>(Card.getAllCards());
-//        deckIterator = deck.iterator();
         deck = shuffle(deck);
         inProgress = true;
         winner = null;
@@ -161,13 +160,10 @@ public class GinRummy {
                 }
 
                 playerTurn = playerTurn.equals(player1) ? player2 : player1;
-
             }
 
-//            for (PlayerStrategy p : scores.keySet()){
-//                System.out.println(scores.get(p));
-//            }
-//            System.out.println();
+            player1.opponentEndRoundFeedback(new ArrayList<>(hands.get(player2)), player2.getMelds());
+            player2.opponentEndRoundFeedback(new ArrayList<>(hands.get(player1)), player1.getMelds());
 
             if (scores.get(player1) >= SCORE_TO_WIN) {
                 winner = player1;

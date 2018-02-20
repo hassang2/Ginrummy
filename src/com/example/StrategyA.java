@@ -12,6 +12,11 @@ public class StrategyA implements PlayerStrategy {
     private Set<Card> deadwood = new HashSet<>();
     private int deadwoodCount = 0;
 
+    private static int DEADWOOD_COUNT_TO_KNOCK = 10;
+    private static int SCORE_PENALTY_FOR_LARGE_MELD = 2;
+    private static int SCORE_FOR_POSSIBLE_RUN = 4;
+    private static int SCORE_FOR_POSSIBLE_SET = 4;
+    private static int SCORE_FOR_OPPONENT_CARD = 2;
 
     @Override
     public void receiveInitialHand(List<Card> cards) {
@@ -51,7 +56,7 @@ public class StrategyA implements PlayerStrategy {
             return lowestValueCard;
         }
 
-        HashMap<Card, Integer> cardScores = getDeadwoodCardScores(deadwood);
+        HashMap<Card, Integer> cardScores = computeCardScores();
 
         Card worstCard = findWorstCard(cardScores);
 
@@ -62,9 +67,7 @@ public class StrategyA implements PlayerStrategy {
 
     @Override
     public boolean knock() {
-        System.out.println("A wood: " + deadwoodCount);
-
-        return deadwoodCount <= 10;
+        return deadwoodCount <= DEADWOOD_COUNT_TO_KNOCK;
     }
 
     @Override
@@ -120,27 +123,47 @@ public class StrategyA implements PlayerStrategy {
         return worstCard;
     }
 
-    private static HashMap<Card, Integer> getDeadwoodCardScores(Set<Card> deadwoods){
-        ArrayList<Card> deadwoodsArrayList = new ArrayList<>(deadwoods);
-        ArrayList<Card> rankSortedCards = sortByRank(deadwoods);
-        ArrayList<Card> suitSortedCards = sortBySuit(deadwoods);
+    private HashMap<Card, Integer> computeCardScores(){
+        ArrayList<Card> rankSortedCards = sortByRank(deadwood);
+        ArrayList<Card> suitSortedCards = sortBySuit(deadwood);
 
         HashMap<Card, Integer> cardScores = new HashMap<>();
 
-        for (int i = 0; i < deadwoodsArrayList.size(); i++) {
-            cardScores.put(deadwoodsArrayList.get(i), 0);
+        for (Card card : hand) {
+            cardScores.put(card, 0);
         }
 
         //2 of same rank
         for (int i = 0; i < rankSortedCards.size() - 1; i++) {
             if (rankSortedCards.get(i).equals(rankSortedCards.get(i+1))){
-                cardScores.put(rankSortedCards.get(i), cardScores.get(rankSortedCards.get(i)) + 1);
+                cardScores.put(rankSortedCards.get(i), cardScores.get(rankSortedCards.get(i)) + SCORE_FOR_POSSIBLE_SET);
             }
         }
         //2 run of suit
         for (int i = 0; i < suitSortedCards.size() - 1; i++) {
             if (suitSortedCards.get(i).equals(suitSortedCards.get(i+1))){
-                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + 2);
+                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + SCORE_FOR_POSSIBLE_RUN);
+            }
+        }
+
+        //don't drop what the opponent has in hand
+        for (Card card : deadwood){
+            if (opponentHand.contains(card)){
+                cardScores.put(card, cardScores.get(card) + SCORE_FOR_OPPONENT_CARD);
+            }
+        }
+
+        //drop from melds if the meld has 4+ cards
+        for (Meld meld : melds){
+            if (meld instanceof RunMeld && meld.getCards().length > 3){
+                ArrayList<Card> suitSortedMeld = sortBySuit(meld.getCards());
+                cardScores.put(suitSortedMeld.get(0), cardScores.get(suitSortedMeld.get(0)) - 1);
+                cardScores.put(suitSortedMeld.get(suitSortedMeld.size() - 1), cardScores.get(
+                        suitSortedMeld.get(suitSortedMeld.size() - 1)) - SCORE_PENALTY_FOR_LARGE_MELD);
+            } else if (meld instanceof SetMeld && meld.getCards().length > 3){
+                for (Card card : meld.getCards()) {
+                    cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_LARGE_MELD);
+                }
             }
         }
 
@@ -332,6 +355,23 @@ public class StrategyA implements PlayerStrategy {
         for (Card.CardSuit suit : Card.CardSuit.values()) {
             cardsForSuit = new ArrayList<>();
             for (Card card : cardList) {
+                if (card.getSuit() == suit){
+                    cardsForSuit.add(card);
+                }
+            }
+            Collections.sort(cardsForSuit);
+            sortedCards.addAll(cardsForSuit);
+        }
+        return sortedCards;
+    }
+
+    private static ArrayList<Card> sortBySuit(Card[] cards){
+        ArrayList<Card> sortedCards = new ArrayList<>();
+        ArrayList<Card> cardsForSuit;
+
+        for (Card.CardSuit suit : Card.CardSuit.values()) {
+            cardsForSuit = new ArrayList<>();
+            for (Card card : cards) {
                 if (card.getSuit() == suit){
                     cardsForSuit.add(card);
                 }
