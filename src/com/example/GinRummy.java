@@ -1,5 +1,6 @@
 package com.example;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.List;
 
@@ -9,13 +10,13 @@ public class GinRummy {
     public static void main(String[] args){
         GinRummy game;
         HashMap<PlayerStrategy, Integer> gameWins = new HashMap<>();
-        PlayerStrategy player1 = new StrategyA();
+        PlayerStrategy player1 = new StrategyC();
         PlayerStrategy player2 = new StrategyB();
 
         gameWins.put(player1, 0);
         gameWins.put(player2, 0);
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 50; i++) {
             System.out.println("Game " + (i+1));
             game = new GinRummy(player1, player2);
             game.playGame();
@@ -38,7 +39,7 @@ public class GinRummy {
     private HashMap<PlayerStrategy, Integer> scores = new HashMap<>();
     private HashMap<PlayerStrategy, Set<Card>> hands = new HashMap<>();
     private ArrayList<Card> deck = new ArrayList<>(Card.getAllCards());
-    Iterator<Card> deckIterator = deck.iterator();
+//    Iterator<Card> deckIterator = deck.iterator();
 
     private Card discard;
     private boolean inProgress = false;
@@ -63,8 +64,8 @@ public class GinRummy {
     private void initGame(){
         player1.reset();
         player2.reset();
-        deck = Card.getAllCards();
-        deckIterator = deck.iterator();
+        deck = new ArrayList<>(Card.getAllCards());
+//        deckIterator = deck.iterator();
         deck = shuffle(deck);
         inProgress = true;
         winner = null;
@@ -78,44 +79,47 @@ public class GinRummy {
 
             initGame();
 
+//            printCards(deck.toArray(new Card[deck.size()]));
             //handling the beginning of the game
-            discard = deckIterator.next();
-            deckIterator.remove();
+            discard = deck.remove(0);
 
             if (!player1.willTakeTopDiscard(discard)) {
                 if (!player2.willTakeTopDiscard(discard)) {
-                    Card card = deckIterator.next();
-                    deckIterator.remove();
+                    Card card = deck.remove(0);
 
                     discard = player1.drawAndDiscard(card);
                     hands.get(player1).add(card);
                     if (!hands.get(player1).remove(discard)) {
-                        System.out.println("player doesn't own this in init game");
+                        System.out.println("player doesn't own " + discard.getRank() + " " + discard.getSuit()  + " in init game1");
+                        System.exit(0);
                     }
 
                     playerTurn = player2;
                 } else {
 
-                    discard = player2.drawAndDiscard(discard);
                     hands.get(player2).add(discard);
+                    discard = player2.drawAndDiscard(discard);
                     if (!hands.get(player2).remove(discard)) {
-                        System.out.println("player doesn't own this in init game");
+
+                        System.out.println("player2 doesn't own this in init game2");
+                        System.exit(0);
                     }
 
                     playerTurn = player1;
                 }
             } else {
+                hands.get(player1).add(discard);
                 discard = player1.drawAndDiscard(discard);
 
-                hands.get(player1).add(discard);
                 if (!hands.get(player1).remove(discard)) {
-                    System.out.println("player doesn't own this in init game");
+                    System.out.println("player1 doesn't own this in init game3");
+                    System.exit(0);
                 }
                 playerTurn = player2;
             }
 
             //regular game
-            while (deckIterator.hasNext()) {
+            while (deck.size() > 0) {
 
                 if (playerTurn.willTakeTopDiscard(discard)) {
                     Card previousDiscard = discard;
@@ -131,8 +135,7 @@ public class GinRummy {
                     playerTurn.opponentEndTurnFeedback(true, previousDiscard, discard);
 
                 } else {
-                    Card nextCard = deckIterator.next();
-                    deckIterator.remove();
+                    Card nextCard = deck.remove(0);
                     Card previousDiscard = discard;
                     discard = playerTurn.drawAndDiscard(nextCard);
 
@@ -147,6 +150,7 @@ public class GinRummy {
                 }
 
                 if (playerTurn.knock()) {
+//                    System.out.println(playerTurn.getClass() + " knocked ");
                     if (!validMelds(hands.get(playerTurn), playerTurn)) {
                         System.out.println("player doesn't own this card in melds");
                         System.exit(0);
@@ -155,13 +159,15 @@ public class GinRummy {
                         break;
                     }
                 }
+
                 playerTurn = playerTurn.equals(player1) ? player2 : player1;
+
             }
 
-            for (PlayerStrategy p : scores.keySet()){
-                System.out.println(scores.get(p));
-            }
-            System.out.println();
+//            for (PlayerStrategy p : scores.keySet()){
+//                System.out.println(scores.get(p));
+//            }
+//            System.out.println();
 
             if (scores.get(player1) >= SCORE_TO_WIN) {
                 winner = player1;
@@ -182,8 +188,7 @@ public class GinRummy {
         Set<Card> hand1Set = new HashSet<>();
 
         for (int i = 0; i < HAND_SIZE; i++) {
-            Card card = deckIterator.next();
-            deckIterator.remove();
+            Card card = deck.remove(0);
             hand1List.add(card);
             hand1Set.add(card);
         }
@@ -196,8 +201,7 @@ public class GinRummy {
         Set<Card> hand2Set = new HashSet<>();
 
         for (int i = 0; i < HAND_SIZE; i++) {
-            Card card = deckIterator.next();
-            deckIterator.remove();
+            Card card = deck.remove(0);
             hand2List.add(card);
             hand2Set.add(card);
         }
@@ -229,7 +233,6 @@ public class GinRummy {
      * @return true if melds are valid and false if not
      */
     private static boolean validMelds(Set<Card> playerHand, PlayerStrategy player){
-        System.out.println(player.getClass());
         if (player.getMelds() == null || player.getMelds().size() == 0){
             return true;
         }
@@ -245,6 +248,7 @@ public class GinRummy {
                     return false;
                 }
             }
+
             if (meld instanceof RunMeld && Meld.buildRunMeld(meld.getCards()) == null){
                 System.out.println("not a run");
 
@@ -266,10 +270,12 @@ public class GinRummy {
      * @param player the player who knocked.
      */
     private void calculateScores(PlayerStrategy player){
-        PlayerStrategy otherPlayer = player.equals(player1) ? player2 : player1;
+        //knocking player
         Set<Card> knockingPlayerDeadwoods = extractDeadwood(hands.get(player), player.getMelds());
         int knockingPlayerDeadwoodCount = calculateDeadwoodCount(knockingPlayerDeadwoods);
 
+        //other player
+        PlayerStrategy otherPlayer = player.equals(player1) ? player2 : player1;
         Set<Card> otherPlayerDeadwoods = extractDeadwood(hands.get(otherPlayer), otherPlayer.getMelds());
         int otherPlayerDeadwoodCount = calculateDeadwoodCount(otherPlayerDeadwoods);
 

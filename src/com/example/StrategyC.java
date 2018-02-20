@@ -30,7 +30,7 @@ public class StrategyC implements PlayerStrategy {
 
     @Override
     public boolean knock() {
-        return true;
+        return false;
     }
 
     @Override

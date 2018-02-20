@@ -36,6 +36,8 @@ public class StrategyA implements PlayerStrategy {
 
         //if we have no deadwood after picking up the new card
         if (deadwood.size() == 0) {
+            System.out.println("no Wood after picking");
+
             Iterator<Card> cardIterator = hand.iterator();
             Card lowestValueCard = cardIterator.next();
             while(cardIterator.hasNext()){
@@ -51,15 +53,17 @@ public class StrategyA implements PlayerStrategy {
 
         HashMap<Card, Integer> cardScores = getDeadwoodCardScores(deadwood);
 
-        Card worseCard = findWorstCard(cardScores);
+        Card worstCard = findWorstCard(cardScores);
 
-        hand.remove(worseCard);
+        hand.remove(worstCard);
         updateHand();
-        return worseCard;
+        return worstCard;
     }
 
     @Override
     public boolean knock() {
+        System.out.println("A wood: " + deadwoodCount);
+
         return deadwoodCount <= 10;
     }
 
@@ -97,16 +101,23 @@ public class StrategyA implements PlayerStrategy {
     }
 
     private static Card findWorstCard(HashMap<Card, Integer> cardScores){
-        Card worseCard = null;
-        int worseScore = Integer.MAX_VALUE;
+        Card worstCard = null;
+        int worstScore = Integer.MAX_VALUE;
         for (Card card : cardScores.keySet()) {
-            if (cardScores.get(card) < worseScore) {
-                worseCard = card;
-                worseScore = cardScores.get(card);
+            if (cardScores.get(card) < worstScore) {
+                worstCard = card;
+                worstScore = cardScores.get(card);
+            } else if (cardScores.get(card) == worstScore){
+                //worstCard.getRankValue will never give null because it's insured above
+                worstCard = (card.getRankValue() < worstCard.getRankValue()) ? worstCard : card;
+                worstScore = cardScores.get(worstCard);
             }
         }
 
-        return worseCard;
+        if (worstCard == null){
+            System.out.println("why tho");
+        }
+        return worstCard;
     }
 
     private static HashMap<Card, Integer> getDeadwoodCardScores(Set<Card> deadwoods){
@@ -119,6 +130,7 @@ public class StrategyA implements PlayerStrategy {
         for (int i = 0; i < deadwoodsArrayList.size(); i++) {
             cardScores.put(deadwoodsArrayList.get(i), 0);
         }
+
         //2 of same rank
         for (int i = 0; i < rankSortedCards.size() - 1; i++) {
             if (rankSortedCards.get(i).equals(rankSortedCards.get(i+1))){
@@ -128,7 +140,7 @@ public class StrategyA implements PlayerStrategy {
         //2 run of suit
         for (int i = 0; i < suitSortedCards.size() - 1; i++) {
             if (suitSortedCards.get(i).equals(suitSortedCards.get(i+1))){
-                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + 1);
+                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + 2);
             }
         }
 
