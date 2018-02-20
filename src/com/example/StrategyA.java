@@ -173,14 +173,14 @@ public class StrategyA implements PlayerStrategy {
         }
 
         //drop if cards that make meld with this card have already been discarded
-        for (Card card : hand){
-            if (discardscards.){
-                //make sure to not decrease score if the card is part of meld
-                //TODO
-                cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_CARD_IN_DISCARDS);
-
-            }
-        }
+//        for (Card card : hand){
+//            if (discardscards.){
+//                //make sure to not decrease score if the card is part of meld
+//                //TODO
+//                cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_CARD_IN_DISCARDS);
+//
+//            }
+//        }
 
         return cardScores;
     }
