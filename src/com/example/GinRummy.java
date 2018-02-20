@@ -6,28 +6,6 @@ import java.util.List;
 
 public class GinRummy {
 
-
-    public static void main(String[] args){
-        GinRummy game;
-        HashMap<PlayerStrategy, Integer> gameWins = new HashMap<>();
-        PlayerStrategy player1 = new StrategyA();
-        PlayerStrategy player2 = new StrategyC();
-
-        gameWins.put(player1, 0);
-        gameWins.put(player2, 0);
-
-        for (int i = 0; i < 50; i++) {
-            System.out.println("Game " + (i+1));
-            game = new GinRummy(player1, player2);
-            game.playGame();
-            gameWins.put(game.getWinner(), gameWins.get(game.getWinner()) + 1);
-        }
-
-        System.out.println("player1 won " + gameWins.get(player1) + " games");
-        System.out.println("player2 won " + gameWins.get(player2) + " games");
-
-    }
-
     private static final int HAND_SIZE = 10;
     private static final int SCORE_TO_WIN = 50;
     private static final int UNDER_CUT_SCORE = 25;

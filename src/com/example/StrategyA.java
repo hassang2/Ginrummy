@@ -10,13 +10,15 @@ public class StrategyA implements PlayerStrategy {
     private Set<Card> hand = new HashSet<>();
     private Set<Card> opponentHand = new HashSet<>();
     private Set<Card> deadwood = new HashSet<>();
+    private ArrayList<Card> discards = new ArrayList<>();
     private int deadwoodCount = 0;
 
-    private static int DEADWOOD_COUNT_TO_KNOCK = 10;
-    private static int SCORE_PENALTY_FOR_LARGE_MELD = 2;
-    private static int SCORE_FOR_POSSIBLE_RUN = 4;
-    private static int SCORE_FOR_POSSIBLE_SET = 4;
-    private static int SCORE_FOR_OPPONENT_CARD = 2;
+    private static final int DEADWOOD_COUNT_TO_KNOCK = 10;
+    private static final int SCORE_PENALTY_FOR_LARGE_MELD = 2;
+    private static final int SCORE_PENALTY_FOR_CARD_IN_DISCARDS = 2;
+    private static final int SCORE_FOR_POSSIBLE_RUN = 4;
+    private static final int SCORE_FOR_POSSIBLE_SET = 4;
+    private static final int SCORE_FOR_OPPONENT_CARD = 2;
 
     @Override
     public void receiveInitialHand(List<Card> cards) {
@@ -61,6 +63,7 @@ public class StrategyA implements PlayerStrategy {
         Card worstCard = findWorstCard(cardScores);
 
         hand.remove(worstCard);
+        discards.add(worstCard);
         updateHand();
         return worstCard;
     }
@@ -74,7 +77,9 @@ public class StrategyA implements PlayerStrategy {
     public void opponentEndTurnFeedback(boolean drewDiscard, Card previousDiscardTop, Card opponentDiscarded) {
         if (drewDiscard) {
             opponentHand.add(previousDiscardTop);
+            discards.remove(previousDiscardTop);
         }
+        discards.add(opponentDiscarded);
         opponentHand.remove(opponentDiscarded);
     }
 
@@ -164,6 +169,16 @@ public class StrategyA implements PlayerStrategy {
                 for (Card card : meld.getCards()) {
                     cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_LARGE_MELD);
                 }
+            }
+        }
+
+        //drop if cards that make meld with this card have already been discarded
+        for (Card card : hand){
+            if (discardscards.){
+                //make sure to not decrease score if the card is part of meld
+                //TODO
+                cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_CARD_IN_DISCARDS);
+
             }
         }
 
