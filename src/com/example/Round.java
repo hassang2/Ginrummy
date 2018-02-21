@@ -70,6 +70,7 @@ public class Round {
             }
         } else {
             hands.get(player1).add(discard);
+            
             discard = player1.drawAndDiscard(discard);
 
             if (!hands.get(player1).remove(discard)) {

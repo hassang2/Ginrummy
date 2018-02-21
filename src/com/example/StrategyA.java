@@ -10,15 +10,17 @@ public class StrategyA implements PlayerStrategy {
     private Set<Card> hand = new HashSet<>();
     private Set<Card> opponentHand = new HashSet<>();
     private Set<Card> deadwood = new HashSet<>();
+    private Set<Card> discards = new HashSet<>();
     private int deadwoodCount = 0;
 
     private static final int DEADWOOD_COUNT_TO_KNOCK = 10;
-    private static final int SCORE_FOR_MELD = 5;
-    private static final int SCORE_PENALTY_FOR_LARGE_MELD = 3;
+    private static final int SCORE_FOR_MELD = 7;
+    private static final int SCORE_PENALTY_FOR_LARGE_MELD = 4;
     private static final int SCORE_FOR_POSSIBLE_RUN = 4;
     private static final int SCORE_FOR_POSSIBLE_SET = 4;
     private static final int SCORE_FOR_OPPONENT_CARD = 2;
     private static final int LARGE_MELD_THRESHOLD = 3;
+    private static final int SCORE_PENALTY_FOR_IN_DISCARD = 2;
 
     @Override
     public void receiveInitialHand(List<Card> cards) {
@@ -47,7 +49,6 @@ public class StrategyA implements PlayerStrategy {
             Iterator<Card> cardIterator = hand.iterator();
             Card lowestValueCard = cardIterator.next();
             while(cardIterator.hasNext()){
-                //");
                 Card nextCard = cardIterator.next();
                 if (nextCard.getPointValue() < lowestValueCard.getPointValue()){
                     lowestValueCard = nextCard;
@@ -76,8 +77,10 @@ public class StrategyA implements PlayerStrategy {
     public void opponentEndTurnFeedback(boolean drewDiscard, Card previousDiscardTop, Card opponentDiscarded) {
         if (drewDiscard) {
             opponentHand.add(previousDiscardTop);
+            discards.remove(previousDiscardTop);
         }
         opponentHand.remove(opponentDiscarded);
+        discards.add(opponentDiscarded);
     }
 
     @Override
@@ -97,6 +100,7 @@ public class StrategyA implements PlayerStrategy {
         deadwood = new HashSet<>();
         deadwoodCount = 0;
         melds = new ArrayList<>();
+        discards = new HashSet<>();
     }
 
     private void updateHand(){
@@ -134,13 +138,14 @@ public class StrategyA implements PlayerStrategy {
 
         //2 of same rank
         for (int i = 0; i < rankSortedCards.size() - 1; i++) {
-            if (rankSortedCards.get(i).equals(rankSortedCards.get(i+1))){
+            if (rankSortedCards.get(i).getRankValue() == rankSortedCards.get(i+1).getRankValue()){
                 cardScores.put(rankSortedCards.get(i), cardScores.get(rankSortedCards.get(i)) + SCORE_FOR_POSSIBLE_SET);
             }
         }
         //2 run of suit
         for (int i = 0; i < suitSortedCards.size() - 1; i++) {
-            if (suitSortedCards.get(i).equals(suitSortedCards.get(i+1))){
+            if (suitSortedCards.get(i).getSuit().equals(suitSortedCards.get(i+1).getSuit())
+                    && suitSortedCards.get(i).getRankValue() + 1 == suitSortedCards.get(i+1).getRankValue()){
                 cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + SCORE_FOR_POSSIBLE_RUN);
             }
         }
@@ -167,6 +172,41 @@ public class StrategyA implements PlayerStrategy {
                 for (Card card : meld.getCards()) {
                     cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_LARGE_MELD);
                 }
+            }
+        }
+
+        /* For Competition */
+
+        //2 of same rank
+        ArrayList<ArrayList<Card>> almostMeld = new ArrayList<>();
+        ArrayList<Card> deadwoodRankSorted = new ArrayList<>(sortByRank(deadwood));
+        for (int i = 0; i <  deadwoodRankSorted.size() - 1; i++) {
+            if (deadwoodRankSorted.get(i).getRankValue() == deadwoodRankSorted.get(i+1).getRankValue()){
+                almostMeld.add(new ArrayList<>());
+                almostMeld.get(almostMeld.size() - 1).add(deadwoodRankSorted.get(i));
+                almostMeld.get(almostMeld.size() - 1).add(deadwoodRankSorted.get(i+1));
+
+                i += 1;
+            }
+        }
+        //2 run of suit
+        ArrayList<Card> deadwoodSuitSorted = new ArrayList<>(sortBySuit(deadwood));
+
+        for (int i = 0; i < deadwoodSuitSorted.size() - 1; i++) {
+            if (suitSortedCards.get(i).getSuit().equals(suitSortedCards.get(i+1).getSuit())
+                    && suitSortedCards.get(i).getRankValue() + 1 == suitSortedCards.get(i+1).getRankValue()){
+                almostMeld.add(new ArrayList<>());
+                almostMeld.get(almostMeld.size() - 1).add(deadwoodSuitSorted.get(i));
+                almostMeld.get(almostMeld.size() - 1).add(deadwoodSuitSorted.get(i+1));
+                i += 1;
+            }
+        }
+
+//        ArrayList<Card> inDiscard = new ArrayList<>();
+        for (ArrayList<Card> cards : almostMeld){
+            int possibleMeldsInDiscard = numberPossibleMeldCards(discards, cards);
+            for (int i = 0; i < possibleMeldsInDiscard; i++) {
+                cardScores.put(cards.get(0), cardScores.get(cards.get(0)) - SCORE_PENALTY_FOR_IN_DISCARD);
             }
         }
 
@@ -223,7 +263,6 @@ public class StrategyA implements PlayerStrategy {
      * recursive function that finds all the valid meld sets that are in allMeldSets
      * @param melds possible valid meld set
      * @param allMeldSets all the meld sets
-     * @return arraylist of all valid meld sets
      */
 
     private static void findAllValidMeldSets(ArrayList<Meld> melds, ArrayList<ArrayList<Meld>> allMeldSets){
@@ -255,8 +294,6 @@ public class StrategyA implements PlayerStrategy {
     }
 
     private static int calculateTotalValue(ArrayList<Meld> melds) {
-        //9");
-
         int count = 0;
         for (Meld meld : melds) {
             for (Card card : meld.getCards()) {
@@ -402,5 +439,29 @@ public class StrategyA implements PlayerStrategy {
 
     public Set<Card> getDeadwood() {
         return deadwood;
+    }
+
+    /* After Deadline. For Competition */
+    private static int numberPossibleMeldCards(Collection<Card> discards, ArrayList<Card> almostMelds){
+        int numberOfCards = 0;
+        if (almostMelds.get(0).getRankValue() == almostMelds.get(1).getRankValue()){
+            for (Card card : discards){
+                if (card.getRankValue() == almostMelds.get(0).getRankValue()){
+                    numberOfCards++;
+                }
+            }
+            return numberOfCards;
+        } else {
+            for (Card card : discards){
+                if (card.getSuit().equals(almostMelds.get(0).getSuit())){
+                    if (card.getRankValue() + 1 == almostMelds.get(0).getRankValue()) {
+                        numberOfCards++;
+                    } else if (card.getRankValue() - 1 == almostMelds.get(1).getRankValue()) {
+                        numberOfCards++;
+                    }
+                }
+            }
+            return numberOfCards;
+        }
     }
 }

@@ -10,7 +10,7 @@ public class Competition {
         GinRummy game;
         HashMap<PlayerStrategy, Integer> gameWins = new HashMap<>();
         PlayerStrategy player1 = new StrategyA();
-        PlayerStrategy player2 = new StrategyC();
+        PlayerStrategy player2 = new StrategyB();
 
         gameWins.put(player1, 0);
         gameWins.put(player2, 0);
