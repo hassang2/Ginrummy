@@ -6,7 +6,6 @@ import java.util.*;
  */
 public class StrategyA implements PlayerStrategy {
 
-    private static final int LARGE_MELD_THRESHOLD = 3;
     private List<Meld> melds = new ArrayList<>();
     private Set<Card> hand = new HashSet<>();
     private Set<Card> opponentHand = new HashSet<>();
@@ -21,6 +20,7 @@ public class StrategyA implements PlayerStrategy {
     private static final int SCORE_FOR_POSSIBLE_RUN = 4;
     private static final int SCORE_FOR_POSSIBLE_SET = 4;
     private static final int SCORE_FOR_OPPONENT_CARD = 2;
+    private static final int LARGE_MELD_THRESHOLD = 3;
 
     @Override
     public void receiveInitialHand(List<Card> cards) {
@@ -49,6 +49,7 @@ public class StrategyA implements PlayerStrategy {
             Iterator<Card> cardIterator = hand.iterator();
             Card lowestValueCard = cardIterator.next();
             while(cardIterator.hasNext()){
+                //");
                 Card nextCard = cardIterator.next();
                 if (nextCard.getPointValue() < lowestValueCard.getPointValue()){
                     lowestValueCard = nextCard;
@@ -101,15 +102,20 @@ public class StrategyA implements PlayerStrategy {
         deadwood = new HashSet<>();
         deadwoodCount = 0;
         melds = new ArrayList<>();
+        discards = new ArrayList<>();
     }
 
     private void updateHand(){
+        //2");
+
         melds = findBestMeldSet(hand);
         deadwood = extractDeadwood(hand, melds);
         deadwoodCount = calculateTotalValue(deadwood);
     }
 
     private static Card findWorstCard(HashMap<Card, Integer> cardScores){
+        //3");
+
         Card worstCard = null;
         int worstScore = Integer.MAX_VALUE;
         for (Card card : cardScores.keySet()) {
@@ -127,6 +133,8 @@ public class StrategyA implements PlayerStrategy {
     }
 
     private HashMap<Card, Integer> computeCardScores(){
+        //4");
+
         ArrayList<Card> rankSortedCards = sortByRank(deadwood);
         ArrayList<Card> suitSortedCards = sortBySuit(deadwood);
 
@@ -194,6 +202,8 @@ public class StrategyA implements PlayerStrategy {
      * @return the set of deadwood cards
      */
     private static Set<Card> extractDeadwood(Set<Card> cards, List<Meld> melds){
+        //5");
+
         Set<Card> cardCopy = new HashSet<>(cards);
         for (Meld meld : melds) {
             for (Card card : meld.getCards()) {
@@ -209,6 +219,8 @@ public class StrategyA implements PlayerStrategy {
      * @return the total deadwood count of the cards
      */
     private static int calculateTotalValue(Collection<Card> cards){
+        //6");
+
         Iterator<Card> cardIterator = cards.iterator();
 
         int count = 0;
@@ -227,28 +239,39 @@ public class StrategyA implements PlayerStrategy {
      * @return an arraylist of set of melds
      */
     private static ArrayList<Meld> findBestMeldSet(Set<Card> cards){
+        //7");
+
         ArrayList<Meld> allMelds = getAllMelds(cards);
 
-        ArrayList<ArrayList<Meld>> allValidMeldSets = findAllValidMeldSets(allMelds, new ArrayList<>());
+        ArrayList<ArrayList<Meld>> allValidMeldSets = new ArrayList<>();
+        findAllValidMeldSets(allMelds, allValidMeldSets);
         return pickBestMeldSet(allValidMeldSets);
     }
 
-    private static ArrayList<ArrayList<Meld>> findAllValidMeldSets(ArrayList<Meld> melds, ArrayList<ArrayList<Meld>> allMeldSets){
+    /**
+     * recursive function that finds all the valid meld sets that are in allMeldSets
+     * @param melds possible valid meld set
+     * @param allMeldSets all the meld sets
+     * @return arraylist of all valid meld sets
+     */
 
+    private static void findAllValidMeldSets(ArrayList<Meld> melds, ArrayList<ArrayList<Meld>> allMeldSets){
         if (isValidMeldSet(melds)){
             allMeldSets.add(melds);
         } else {
+            ArrayList<Meld> meldsSubset;
             for (Meld meld: melds){
-                ArrayList<Meld> meldsSubset = new ArrayList<>(melds);
+                meldsSubset = new ArrayList<>(melds);
                 meldsSubset.remove(meld);
                 //maybe it wont work because I'm not assigning this ?
                 findAllValidMeldSets(meldsSubset, allMeldSets);
             }
         }
-        return allMeldSets;
     }
 
     private static ArrayList<Meld> pickBestMeldSet(ArrayList<ArrayList<Meld>> meldSets){
+        //8");
+
         ArrayList<Meld> bestMeldSet = meldSets.get(0);
         int maximumCount = calculateTotalValue(meldSets.get(0));
         for (int i = 1; i < meldSets.size() ; i++) {
@@ -263,6 +286,8 @@ public class StrategyA implements PlayerStrategy {
     }
 
     private static int calculateTotalValue(ArrayList<Meld> melds) {
+        //9");
+
         int count = 0;
         for (Meld meld : melds) {
             for (Card card : meld.getCards()) {
@@ -278,6 +303,8 @@ public class StrategyA implements PlayerStrategy {
      * @return whether the meld set is valid or not
      */
     private static boolean isValidMeldSet(ArrayList<Meld> melds){
+        //10");
+
         Set<Card> handSet = new HashSet<>();
         for (Meld meld : melds){
             for (Card card : meld.getCards()){
@@ -298,6 +325,8 @@ public class StrategyA implements PlayerStrategy {
      * @return arraylist of all possible melds with the given cards
      */
     private static ArrayList<Meld> getAllMelds(Set<Card> cards){
+        //11");
+
         ArrayList<Card> rankSortedCards = sortByRank(cards);
         ArrayList<Card> suitSortedCards = sortBySuit(cards);
         ArrayList<Meld> allMelds = new ArrayList<>();
@@ -356,6 +385,8 @@ public class StrategyA implements PlayerStrategy {
                 allMelds.add(possibleMeld);
             }
         }
+        // LOOP11");
+
         return allMelds;
     }
 

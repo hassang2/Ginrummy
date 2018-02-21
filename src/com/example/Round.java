@@ -21,8 +21,13 @@ public class Round {
     private PlayerStrategy winner = null;
 
     public Round(PlayerStrategy p2, PlayerStrategy p1){
-        player1 = p1;
-        player2 = p2;
+        if (Math.random() < .5) {
+            player1 = p1;
+            player2 = p2;
+        } else {
+            player1 = p2;
+            player2 = p1;
+        }
     }
 
     public void initRound(){
@@ -117,6 +122,7 @@ public class Round {
 
             playerTurn = playerTurn.equals(player1) ? player2 : player1;
         }
+
 
         player1.opponentEndRoundFeedback(new ArrayList<>(hands.get(player2)), player2.getMelds());
         player2.opponentEndRoundFeedback(new ArrayList<>(hands.get(player1)), player1.getMelds());

@@ -36,8 +36,6 @@ public class StrategyB implements PlayerStrategy {
 
         //if we have no deadwood after picking up the new card
         if (deadwood.size() == 0) {
-            System.out.println("no Wood after picking");
-
             Iterator<Card> cardIterator = hand.iterator();
             Card lowestValueCard = cardIterator.next();
             while(cardIterator.hasNext()){
@@ -112,9 +110,6 @@ public class StrategyB implements PlayerStrategy {
             }
         }
 
-        if (worstCard == null){
-            System.out.println("why tho");
-        }
         return worstCard;
     }
 
