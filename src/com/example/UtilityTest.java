@@ -1,13 +1,10 @@
 package com.example;
 
-import com.sun.jndi.toolkit.url.Uri;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,7 +15,6 @@ public class UtilityTest {
 
     @Before
     public void setUp() throws Exception {
-
         testCardsArray = new ArrayList<>(Card.getAllCards());
         cards = new HashSet<>(testCardsArray.subList(0, 10));
 

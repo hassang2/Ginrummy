@@ -6,7 +6,6 @@ public class Utility {
 
     private static final int MIN_DEADWOOD_COUNT_TO_KNOCK = 10;
 
-
     /**
      * checks if the player actually owns the cards in their melds and validate their presented melds.
      * This also checks if the deadwood count of the player is less than or equal to 10.

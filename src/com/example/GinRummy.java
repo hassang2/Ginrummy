@@ -43,24 +43,4 @@ public class GinRummy {
     public PlayerStrategy getWinner(){
         return winner;
     }
-
-//    public static void printCards(Set<Card> cards){
-//        for (Card card : cards) {
-//            System.out.print(card.getRank() + " " + card.getSuit() + " ");
-//        }
-//        System.out.print("\n");
-//
-//    }
-//    public static void printCards(Card[] cards){
-//        for (Card card : cards){
-//            System.out.print(card.getRank() + " " + card.getSuit() + " ");
-//        }
-//        System.out.print("\n");
-//    }
-//
-//    public static void printCards(ArrayList<Meld> melds){
-//        for (Meld meld : melds){
-//            printCards(meld.getCards());
-//        }
-//    }
 }

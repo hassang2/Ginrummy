@@ -10,13 +10,11 @@ public class StrategyA implements PlayerStrategy {
     private Set<Card> hand = new HashSet<>();
     private Set<Card> opponentHand = new HashSet<>();
     private Set<Card> deadwood = new HashSet<>();
-    private ArrayList<Card> discards = new ArrayList<>();
     private int deadwoodCount = 0;
 
     private static final int DEADWOOD_COUNT_TO_KNOCK = 10;
     private static final int SCORE_FOR_MELD = 5;
     private static final int SCORE_PENALTY_FOR_LARGE_MELD = 3;
-    private static final int SCORE_PENALTY_FOR_CARD_IN_DISCARDS = 2;
     private static final int SCORE_FOR_POSSIBLE_RUN = 4;
     private static final int SCORE_FOR_POSSIBLE_SET = 4;
     private static final int SCORE_FOR_OPPONENT_CARD = 2;
@@ -65,7 +63,6 @@ public class StrategyA implements PlayerStrategy {
         Card worstCard = findWorstCard(cardScores);
 
         hand.remove(worstCard);
-        discards.add(worstCard);
         updateHand();
         return worstCard;
     }
@@ -79,9 +76,7 @@ public class StrategyA implements PlayerStrategy {
     public void opponentEndTurnFeedback(boolean drewDiscard, Card previousDiscardTop, Card opponentDiscarded) {
         if (drewDiscard) {
             opponentHand.add(previousDiscardTop);
-            discards.remove(previousDiscardTop);
         }
-        discards.add(opponentDiscarded);
         opponentHand.remove(opponentDiscarded);
     }
 
@@ -102,20 +97,15 @@ public class StrategyA implements PlayerStrategy {
         deadwood = new HashSet<>();
         deadwoodCount = 0;
         melds = new ArrayList<>();
-        discards = new ArrayList<>();
     }
 
     private void updateHand(){
-        //2");
-
         melds = findBestMeldSet(hand);
         deadwood = extractDeadwood(hand, melds);
         deadwoodCount = calculateTotalValue(deadwood);
     }
 
     private static Card findWorstCard(HashMap<Card, Integer> cardScores){
-        //3");
-
         Card worstCard = null;
         int worstScore = Integer.MAX_VALUE;
         for (Card card : cardScores.keySet()) {
@@ -133,8 +123,6 @@ public class StrategyA implements PlayerStrategy {
     }
 
     private HashMap<Card, Integer> computeCardScores(){
-        //4");
-
         ArrayList<Card> rankSortedCards = sortByRank(deadwood);
         ArrayList<Card> suitSortedCards = sortBySuit(deadwood);
 
@@ -182,17 +170,6 @@ public class StrategyA implements PlayerStrategy {
             }
         }
 
-        //drop if cards that make meld with this card have already been discarded
-//        for (Card card : hand){
-//            if (discards.){
-//                //make sure to not decrease score if the card is part of meld
-//                //TODO
-//                cardScores.put(card, cardScores.get(card) - SCORE_PENALTY_FOR_CARD_IN_DISCARDS);
-//
-//            }
-//        }
-
-
         return cardScores;
     }
     /**
@@ -202,8 +179,6 @@ public class StrategyA implements PlayerStrategy {
      * @return the set of deadwood cards
      */
     private static Set<Card> extractDeadwood(Set<Card> cards, List<Meld> melds){
-        //5");
-
         Set<Card> cardCopy = new HashSet<>(cards);
         for (Meld meld : melds) {
             for (Card card : meld.getCards()) {
@@ -219,8 +194,6 @@ public class StrategyA implements PlayerStrategy {
      * @return the total deadwood count of the cards
      */
     private static int calculateTotalValue(Collection<Card> cards){
-        //6");
-
         Iterator<Card> cardIterator = cards.iterator();
 
         int count = 0;
@@ -239,8 +212,6 @@ public class StrategyA implements PlayerStrategy {
      * @return an arraylist of set of melds
      */
     private static ArrayList<Meld> findBestMeldSet(Set<Card> cards){
-        //7");
-
         ArrayList<Meld> allMelds = getAllMelds(cards);
 
         ArrayList<ArrayList<Meld>> allValidMeldSets = new ArrayList<>();
@@ -270,8 +241,6 @@ public class StrategyA implements PlayerStrategy {
     }
 
     private static ArrayList<Meld> pickBestMeldSet(ArrayList<ArrayList<Meld>> meldSets){
-        //8");
-
         ArrayList<Meld> bestMeldSet = meldSets.get(0);
         int maximumCount = calculateTotalValue(meldSets.get(0));
         for (int i = 1; i < meldSets.size() ; i++) {
@@ -303,8 +272,6 @@ public class StrategyA implements PlayerStrategy {
      * @return whether the meld set is valid or not
      */
     private static boolean isValidMeldSet(ArrayList<Meld> melds){
-        //10");
-
         Set<Card> handSet = new HashSet<>();
         for (Meld meld : melds){
             for (Card card : meld.getCards()){
@@ -325,8 +292,6 @@ public class StrategyA implements PlayerStrategy {
      * @return arraylist of all possible melds with the given cards
      */
     private static ArrayList<Meld> getAllMelds(Set<Card> cards){
-        //11");
-
         ArrayList<Card> rankSortedCards = sortByRank(cards);
         ArrayList<Card> suitSortedCards = sortBySuit(cards);
         ArrayList<Meld> allMelds = new ArrayList<>();
@@ -431,15 +396,11 @@ public class StrategyA implements PlayerStrategy {
         return sortedCards;
     }
 
-    /**
-     * returns how many cards that could have created a meld with this card are in the given list of cards.
-     * for example if the card is 8 of spades, this method returns the number of 8's in the cards and +1
-     * for 7 or 9 of spades
-     * @param cards the cards we want to search through
-     * @param card the card we want to search for
-     * @return the number of cards that might have been meld with the given card.
-     */
-//    private static int contains(ArrayList<Card> cards, Card card){
-//
-//    }
+    public Set<Card> getHand() {
+        return hand;
+    }
+
+    public Set<Card> getDeadwood() {
+        return deadwood;
+    }
 }

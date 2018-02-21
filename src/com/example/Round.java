@@ -129,7 +129,7 @@ public class Round {
     }
 
     /**
-     * calcualtes the scores that should be awarded to each player
+     * calculates the scores that should be awarded to each player
      * @param knockingPlayer the player who knocked.
      */
     private int calculateScore(PlayerStrategy knockingPlayer){
