@@ -1,2 +1,2 @@
-src/com/example/StrategyC.java
-Randomer
+src/com/example/StrategyA.java
+¯\_(ツ)_/¯ 
