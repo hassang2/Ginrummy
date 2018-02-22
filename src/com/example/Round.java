@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class Round {
 
@@ -20,7 +22,7 @@ public class Round {
     private int endScore = 0;
     private PlayerStrategy winner = null;
 
-    public Round(PlayerStrategy p2, PlayerStrategy p1){
+    public Round(PlayerStrategy p2, PlayerStrategy p1) {
         if (Math.random() < .5) {
             player1 = p1;
             player2 = p2;
@@ -30,7 +32,7 @@ public class Round {
         }
     }
 
-    public void initRound(){
+    public void initRound() {
         player1.reset();
         player2.reset();
         deck = new ArrayList<>(Card.getAllCards());
@@ -44,11 +46,12 @@ public class Round {
     public void playRound() {
         //handling the beginning of the game
         discard = deck.remove(0);
+
         if (!player1.willTakeTopDiscard(discard)) {
             if (!player2.willTakeTopDiscard(discard)) {
                 Card card = deck.remove(0);
-
                 discard = player1.drawAndDiscard(card);
+
                 hands.get(player1).add(card);
                 if (!hands.get(player1).remove(discard)) {
                     System.out.println("player doesn't own " + discard.getRank() + " " + discard.getSuit() + " in init game1");
@@ -70,7 +73,6 @@ public class Round {
             }
         } else {
             hands.get(player1).add(discard);
-            
             discard = player1.drawAndDiscard(discard);
 
             if (!hands.get(player1).remove(discard)) {
@@ -86,6 +88,7 @@ public class Round {
             if (playerTurn.willTakeTopDiscard(discard)) {
                 Card previousDiscard = discard;
                 discard = playerTurn.drawAndDiscard(previousDiscard);
+
                 hands.get(playerTurn).add(previousDiscard);
 
 
@@ -131,9 +134,10 @@ public class Round {
 
     /**
      * calculates the scores that should be awarded to each player
+     *
      * @param knockingPlayer the player who knocked.
      */
-    private int calculateScore(PlayerStrategy knockingPlayer){
+    private int calculateScore(PlayerStrategy knockingPlayer) {
         //knocking player
         Set<Card> knockingPlayerDeadwoods = Utility.extractDeadwood(hands.get(knockingPlayer), knockingPlayer.getMelds());
         int knockingPlayerDeadwoodCount = Utility.calculateDeadwoodCount(knockingPlayerDeadwoods);
@@ -144,7 +148,7 @@ public class Round {
         int otherPlayerDeadwoodCount = Utility.calculateDeadwoodCount(otherPlayerDeadwoods);
 
         //if it is Gin
-        if (knockingPlayerDeadwoodCount == 0){
+        if (knockingPlayerDeadwoodCount == 0) {
             winner = knockingPlayer;
             return GIN_SCORE + otherPlayerDeadwoodCount;
         } else {
@@ -165,7 +169,7 @@ public class Round {
     /**
      * @return the score that should awarded to the winner
      */
-    public int getRoundScore(){
+    public int getRoundScore() {
         return endScore;
     }
 
@@ -176,7 +180,7 @@ public class Round {
     /**
      * deals initial hand to each player
      */
-    private void dealInitialHands(){
+    private void dealInitialHands() {
 
         //deal hand to player 1
         ArrayList<Card> hand1List = new ArrayList<>();
