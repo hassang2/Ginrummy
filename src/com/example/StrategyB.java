@@ -2,7 +2,7 @@ package com.example;
 import java.util.*;
 
 /**
- * Never Knock
+ * Never 
  */
 public class StrategyB implements PlayerStrategy {
 
@@ -60,7 +60,7 @@ public class StrategyB implements PlayerStrategy {
 
     @Override
     public boolean knock() {
-        return false;
+        return deadwoodCount <= 10;
     }
 
     @Override
@@ -126,14 +126,15 @@ public class StrategyB implements PlayerStrategy {
 
         //2 of same rank
         for (int i = 0; i < rankSortedCards.size() - 1; i++) {
-            if (rankSortedCards.get(i).equals(rankSortedCards.get(i+1))){
-                cardScores.put(rankSortedCards.get(i), cardScores.get(rankSortedCards.get(i)) + 1);
+            if (rankSortedCards.get(i).getRankValue() == rankSortedCards.get(i+1).getRankValue()){
+                cardScores.put(rankSortedCards.get(i), cardScores.get(rankSortedCards.get(i)) + SCORE_FOR_POSSIBLE_SET);
             }
         }
         //2 run of suit
         for (int i = 0; i < suitSortedCards.size() - 1; i++) {
-            if (suitSortedCards.get(i).equals(suitSortedCards.get(i+1))){
-                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + 2);
+            if (suitSortedCards.get(i).getSuit().equals(suitSortedCards.get(i+1).getSuit())
+                    && suitSortedCards.get(i).getRankValue() + 1 == suitSortedCards.get(i+1).getRankValue()){
+                cardScores.put(suitSortedCards.get(i), cardScores.get(suitSortedCards.get(i)) + SCORE_FOR_POSSIBLE_RUN);
             }
         }
 
